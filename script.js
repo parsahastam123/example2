@@ -1,35 +1,57 @@
-function uploadFile(categoryId) {
-    const categorySection = document.getElementById(categoryId);
-    const input = categorySection.querySelector('input[type="file"]');
-    const fileList = categorySection.querySelector('.file-list');
+document.querySelectorAll('form').forEach(form => {
+    form.addEventListener('submit', function(event) {
+        event.preventDefault();
+        const uploadCode = this.querySelector('input[type="text"]').value;
 
-    if (input.files.length > 0) {
-        const file = input.files[0];
-        const listItem = document.createElement('li');
-        const link = document.createElement('a');
+        // بررسی کد اعتبارسنجی
+        if (uploadCode !== '1289') {
+            alert('کد اعتبارسنجی نادرست است.');
+            return;
+        }
 
-        link.href = URL.createObjectURL(file);
-        link.textContent = file.name;
-        link.download = file.name;
+        const formData = new FormData(this);
 
-        listItem.appendChild(link);
-        fileList.appendChild(listItem);
+        fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                loadFiles(this.id);
+            })
+            .catch(error => console.error('Error:', error));
+    });
+});
 
-        input.value = '';
-        alert('فایل با موفقیت آپلود شد!');
-    } else {
-        alert('لطفاً یک فایل انتخاب کنید.');
-    }
+function loadFiles(formId) {
+    fetch('/files')
+        .then(response => response.json())
+        .then(files => {
+            const fileList = document.getElementById(`fileList${formId}`);
+            fileList.innerHTML = '';
+            files.forEach(file => {
+                const listItem = document.createElement('li');
+                const link = document.createElement('a');
+                link.href = file.filepath;
+                link.textContent = file.filename;
+                link.download = file.filename;
+                listItem.appendChild(link);
+                fileList.appendChild(listItem);
+            });
+        })
+        .catch(error => console.error('Error:', error));
 }
 
-// اضافه کردن انیمیشن ساده
-document.querySelectorAll('.tab-button').forEach(button => {
-    button.addEventListener('click', () => {
-        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-        button.classList.add('active');
-
-        const tabId = button.getAttribute('data-tab');
-        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-        document.getElementById(tabId).classList.add('active');
-    });
+// بارگذاری فایل‌ها برای هر دسته‌بندی در ابتدای بارگذاری صفحه
+document.addEventListener('DOMContentLoaded', () => {
+    loadFiles('Timss');
+    loadFiles('Rational');
+    loadFiles('Algebraic');
+    loadFiles('Pythagorean');
+    loadFiles('Powers');
+    loadFiles('Circle');
+    loadFiles('Triangle');
+    loadFiles('Probability');
+    loadFiles('Vectors');
 });
